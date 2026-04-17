@@ -6,6 +6,7 @@ def search(query: str, max_results: int = 5) -> list:
         "https://api.parallel.ai/v1beta/search",
         headers={"x-api-key": os.environ["PARALLEL_API_KEY"]},
         json={"objective": query, "mode": "agentic", "max_results": max_results},
+        timeout=(10, 120),
     )
     r.raise_for_status()
     results = r.json()["results"]

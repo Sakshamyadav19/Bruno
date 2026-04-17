@@ -2,6 +2,7 @@
 import argparse, os, requests
 
 API = "https://api.agentmail.to/v0"
+TIMEOUT = (10, 30)
 
 def get_headers():
     return {
@@ -15,6 +16,7 @@ def send(to: str, subject: str, body: str) -> dict:
         f"{API}/inboxes/{inbox_id}/messages/send",
         headers=get_headers(),
         json={"to": to, "subject": subject, "text": body},
+        timeout=TIMEOUT,
     )
     r.raise_for_status()
     result = r.json()

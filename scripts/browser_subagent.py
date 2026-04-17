@@ -5,6 +5,7 @@ API = "https://api.browser-use.com/api/v2"
 HEADERS = {"X-Browser-Use-API-Key": os.environ["BROWSER_USE_API_KEY"]}
 MAX_POLL_SECONDS = 20 * 60
 POLL_INTERVAL = 5
+TIMEOUT = (10, 30)
 
 def run(task: str, url: str | None = None) -> dict:
     body = {
@@ -17,7 +18,7 @@ def run(task: str, url: str | None = None) -> dict:
     if url:
         body["startUrl"] = url
 
-    r = requests.post(f"{API}/tasks", json=body, headers=HEADERS)
+    r = requests.post(f"{API}/tasks", json=body, headers=HEADERS, timeout=TIMEOUT)
     r.raise_for_status()
     task_id = r.json()["id"]
     print(f"Task {task_id} created, polling...")
@@ -27,12 +28,12 @@ def run(task: str, url: str | None = None) -> dict:
         if time.time() > deadline:
             raise TimeoutError(f"Task {task_id} did not finish within {MAX_POLL_SECONDS}s")
         time.sleep(POLL_INTERVAL)
-        r = requests.get(f"{API}/tasks/{task_id}/status", headers=HEADERS)
+        r = requests.get(f"{API}/tasks/{task_id}/status", headers=HEADERS, timeout=TIMEOUT)
         r.raise_for_status()
         if r.json()["status"] in ("finished", "stopped"):
             break
 
-    r = requests.get(f"{API}/tasks/{task_id}", headers=HEADERS)
+    r = requests.get(f"{API}/tasks/{task_id}", headers=HEADERS, timeout=TIMEOUT)
     r.raise_for_status()
     detail = r.json()
 

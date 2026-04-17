@@ -8,6 +8,7 @@ Usage:
 import argparse, os, json, requests
 
 API = "https://api.agentmail.to/v0"
+TIMEOUT = (10, 30)
 
 def get_headers():
     return {
@@ -21,6 +22,7 @@ def list_messages(limit: int = 10) -> list:
         f"{API}/inboxes/{inbox_id}/messages",
         headers=get_headers(),
         params={"limit": limit},
+        timeout=TIMEOUT,
     )
     r.raise_for_status()
     return r.json()
@@ -30,6 +32,7 @@ def get_message(message_id: str) -> dict:
     r = requests.get(
         f"{API}/inboxes/{inbox_id}/messages/{message_id}",
         headers=get_headers(),
+        timeout=TIMEOUT,
     )
     r.raise_for_status()
     return r.json()

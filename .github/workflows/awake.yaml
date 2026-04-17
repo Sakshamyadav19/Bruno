@@ -82,8 +82,8 @@ jobs:
           git add journal memory research TODO.md IDENTITY.md WORLD.md AGENTS.md README.md scripts opencode.json .github 2>/dev/null || true
           if ! git diff --cached --quiet; then
             git commit -m "Bruno session safety commit $(TZ='America/Los_Angeles' date '+%Y-%m-%d %H:%M %Z')"
-            git push
           fi
+          git push
 
       - name: Encrypt .env if plaintext changed
         if: always()
