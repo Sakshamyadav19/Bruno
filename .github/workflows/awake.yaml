@@ -6,6 +6,10 @@ on:
   workflow_dispatch:
     # Allow manual trigger
 
+concurrency:
+  group: bruno
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
@@ -72,21 +76,31 @@ jobs:
           CURRENT_TIME=$(TZ='America/Los_Angeles' date '+%Y-%m-%d %H:%M %Z')
           opencode run "Current time: $CURRENT_TIME. Read AGENTS.md and follow the instructions."
 
-      - name: Encrypt .env if changed
+      - name: Commit and push any session artifacts Bruno forgot
+        if: always()
+        run: |
+          git add journal memory research TODO.md IDENTITY.md WORLD.md AGENTS.md README.md scripts opencode.json .github 2>/dev/null || true
+          if ! git diff --cached --quiet; then
+            git commit -m "Bruno session safety commit $(TZ='America/Los_Angeles' date '+%Y-%m-%d %H:%M %Z')"
+            git push
+          fi
+
+      - name: Encrypt .env if plaintext changed
+        if: always()
         env:
           ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
         run: |
-          if [ -f .env ]; then
-            openssl enc -aes-256-cbc -pbkdf2 -in .env -out .env.enc.new -pass env:ENCRYPTION_KEY
-            if [ -f .env.enc ]; then
-              if ! diff -q .env.enc .env.enc.new > /dev/null 2>&1; then
-                mv .env.enc.new .env.enc
-                git add .env.enc && git commit -m "Update encrypted .env" && git push
-              else
-                rm .env.enc.new
-              fi
-            else
-              mv .env.enc.new .env.enc
-              git add .env.enc && git commit -m "Add encrypted .env" && git push
+          if [ ! -f .env ]; then exit 0; fi
+          if [ -f .env.enc ]; then
+            openssl enc -aes-256-cbc -d -pbkdf2 -in .env.enc -out .env.decrypted -pass env:ENCRYPTION_KEY
+            if diff -q .env .env.decrypted > /dev/null 2>&1; then
+              rm -f .env.decrypted
+              exit 0
             fi
+            rm -f .env.decrypted
+            openssl enc -aes-256-cbc -pbkdf2 -in .env -out .env.enc -pass env:ENCRYPTION_KEY
+            git add .env.enc && git commit -m "Update encrypted .env" && git push
+          else
+            openssl enc -aes-256-cbc -pbkdf2 -in .env -out .env.enc -pass env:ENCRYPTION_KEY
+            git add .env.enc && git commit -m "Add encrypted .env" && git push
           fi

@@ -73,9 +73,12 @@ if __name__ == "__main__":
         if args.json:
             print(json.dumps(messages, indent=2))
         else:
-            # Handle paginated response
-            if isinstance(messages, dict):
-                items = messages.get('messages', messages.get('items', [messages]))
-            else:
+            if isinstance(messages, list):
                 items = messages
+            elif isinstance(messages, dict) and 'messages' in messages:
+                items = messages['messages']
+            elif isinstance(messages, dict) and 'items' in messages:
+                items = messages['items']
+            else:
+                raise RuntimeError(f"Unexpected response shape: {type(messages).__name__}")
             print_messages(items)

@@ -3,6 +3,8 @@ import argparse, json, os, time, requests
 
 API = "https://api.browser-use.com/api/v2"
 HEADERS = {"X-Browser-Use-API-Key": os.environ["BROWSER_USE_API_KEY"]}
+MAX_POLL_SECONDS = 20 * 60
+POLL_INTERVAL = 5
 
 def run(task: str, url: str | None = None) -> dict:
     body = {
@@ -15,16 +17,24 @@ def run(task: str, url: str | None = None) -> dict:
     if url:
         body["startUrl"] = url
 
-    task_id = requests.post(f"{API}/tasks", json=body, headers=HEADERS).json()["id"]
+    r = requests.post(f"{API}/tasks", json=body, headers=HEADERS)
+    r.raise_for_status()
+    task_id = r.json()["id"]
     print(f"Task {task_id} created, polling...")
 
+    deadline = time.time() + MAX_POLL_SECONDS
     while True:
-        time.sleep(5)
-        s = requests.get(f"{API}/tasks/{task_id}/status", headers=HEADERS).json()
-        if s["status"] in ("finished", "stopped"):
+        if time.time() > deadline:
+            raise TimeoutError(f"Task {task_id} did not finish within {MAX_POLL_SECONDS}s")
+        time.sleep(POLL_INTERVAL)
+        r = requests.get(f"{API}/tasks/{task_id}/status", headers=HEADERS)
+        r.raise_for_status()
+        if r.json()["status"] in ("finished", "stopped"):
             break
 
-    detail = requests.get(f"{API}/tasks/{task_id}", headers=HEADERS).json()
+    r = requests.get(f"{API}/tasks/{task_id}", headers=HEADERS)
+    r.raise_for_status()
+    detail = r.json()
 
     os.makedirs("browser-use-traces", exist_ok=True)
     with open(f"browser-use-traces/{task_id}.json", "w") as f:

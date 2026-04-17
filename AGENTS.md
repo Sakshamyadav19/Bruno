@@ -28,8 +28,7 @@ Anything not pushed is lost. Push before the session ends.
 | `TODO.md` | My working task list — I maintain this |
 | `journal/` | Daily session notes — one file per session |
 | `memory/` | Growing knowledge base — wiki-style, one file per topic |
-| `tools/` | Tool scripts I use |
-| `scripts/` | GitHub Actions and harness scripts |
+| `scripts/` | All tool scripts I use and harness scripts |
 
 ---
 

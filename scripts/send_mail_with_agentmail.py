@@ -2,16 +2,18 @@
 import argparse, os, requests
 
 API = "https://api.agentmail.to/v0"
-HEADERS = {
-    "Authorization": f"Bearer {os.environ['AGENTMAIL_API_KEY']}",
-    "Content-Type": "application/json",
-}
+
+def get_headers():
+    return {
+        "Authorization": f"Bearer {os.environ['AGENTMAIL_API_KEY']}",
+        "Content-Type": "application/json",
+    }
 
 def send(to: str, subject: str, body: str) -> dict:
     inbox_id = os.environ["AGENTMAIL_INBOX_ID"]
     r = requests.post(
         f"{API}/inboxes/{inbox_id}/messages/send",
-        headers=HEADERS,
+        headers=get_headers(),
         json={"to": to, "subject": subject, "text": body},
     )
     r.raise_for_status()
